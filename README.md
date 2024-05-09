@@ -33,4 +33,5 @@ Used nodemailer for sending the mail reply
 
 To Run in Local machine 
 Hit the api using postman and it starts working automatically
+
 http://localhost:4000/configure?email=[EMAIL_ADDRESS]&appPassword=[YOUR_APP_PASSWORD]
