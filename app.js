@@ -8,82 +8,92 @@ const { simpleParser } = require("mailparser");
 const getEmails = (email, appPassword) => {
   try {
     const imapConfig = {
-      user: "bansal2210sahil@gmail.com",
-      password: "yegujrpwnuzaeeih",
+      user:email,
+      password: appPassword,
       host: "imap.gmail.com",
       port: 993,
       tls: true,
       tlsOptions: { rejectUnauthorized: false },
     };
-    const imap = new Imap(imapConfig);
 
-    imap.once("ready", () => {
-      imap.openBox("INBOX", false, () => {
-        imap.search(["UNSEEN", ["SINCE", new Date()]], (err, results) => {
-          const f = imap.fetch(results, { bodies: "" });
-          f.on("message", (msg) => {
-            msg.on("body", (stream) => {
-              simpleParser(stream, async (err, parsed) => {
-                // const {from, subject, textAsHtml, text} = parsed;
-                console.log("parsed,", parsed);
-
-                // Retrieve sender's email address
-                const sender = parsed.headers.get("from").text;
-
-                // Regular expression to match email addresses
-                const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g;
-              
-                const extractedEmails = sender.match(emailRegex);
-                
-                // Log the extracted email addresses
-                console.log('Extracted Emails:', extractedEmails);
-                // Retrieve email body
-                let emailBody = parsed.text;
-               
-
-                console.log("Sender:", extractedEmails);
-                console.log("Email Body:", emailBody);
-
-                processEmail(extractedEmails, emailBody);
-
-                /* Make API call to save the data
-                     Save the retrieved data into a database.
-                     E.t.c
-                  */
-              });
-            });
-            msg.once("attributes", (attrs) => {
-              const { uid } = attrs;
-              imap.addFlags(uid, ["\\Seen"], () => {
-                // Mark the email as read after reading it
-                console.log("Marked as read!");
-              });
-            });
-          });
-          f.once("error", (ex) => {
-            return Promise.reject(ex);
-          });
-          f.once("end", () => {
-            console.log("Done fetching all messages!");
-            imap.end();
-          });
-        });
-      });
-    });
-
-    imap.once("error", (err) => {
-      console.log("error in imap", err);
-    });
-
-    imap.once("end", () => {
-      console.log("Connection ended");
-    });
-
-    imap.connect();
+    setInterval(()=>checkIMAP(imapConfig),30000);
+    checkIMAP(imapConfig)
   } catch (ex) {
     console.log("an error occurred");
   }
 };
+const checkIMAP=(imapConfig)=>{
+    const imap = new Imap(imapConfig);
+    imap.connect();
+    imap.once("ready", () => {
+        imap.openBox("INBOX", false, () => {
+          imap.search(["UNSEEN", ["SINCE", new Date()]], (err, results) => {
+              if(results.length>0){
+            const f = imap.fetch(results, { bodies: "" });
+            f.on("message", (msg) => {
+              msg.on("body", (stream) => {
+                simpleParser(stream, async (err, parsed) => {
+                  // const {from, subject, textAsHtml, text} = parsed;
+                  console.log("parsed,", parsed);
+  
+                  // Retrieve sender's email address
+                  const sender = parsed.headers.get("from").text;
+  
+                  // Regular expression to match email addresses
+                  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g;
+                
+                  const extractedEmails = sender.match(emailRegex);
+                  
+                  // Log the extracted email addresses
+                  console.log('Extracted Emails:', extractedEmails);
+                  // Retrieve email body
+                  let emailBody = parsed.text;
+                 
+  
+                  console.log("Sender:", extractedEmails);
+                  console.log("Email Body:", emailBody);
+  
+                  processEmail(extractedEmails, emailBody);
+  
+                  /* Make API call to save the data
+                       Save the retrieved data into a database.
+                       E.t.c
+                    */
+                });
+              });
+              msg.once("attributes", (attrs) => {
+                const { uid } = attrs;
+                imap.addFlags(uid, ["\\Seen"], () => {
+                  // Mark the email as read after reading it
+                  console.log("Marked as read!");
+                });
+              });
+            });
+          
+            f.once("error", (ex) => {
+              return Promise.reject(ex);
+            });
+            f.once("end", () => {
+              console.log("Done fetching all messages!");
+            });
+          }
+          else{
+            imap.end();
+          }
+          });
+        });
+      });
+  
+      imap.once("error", (err) => {
+        console.log("error in imap", err);
+        imap.destroy();
+      });
+  
+      imap.once("end", () => {
+        console.log("Connection ended");
+        imap.destroy();
+      });
+}
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -113,6 +123,7 @@ app.post("/configure", async (req, res) => {
 
   // Start reading and queuing emails after configuration
   readAndQueueEmails(email, appPassword);
+
 });
 
 async function readAndQueueEmails(email, appPassword) {
@@ -147,7 +158,6 @@ async function readAndQueueEmails(email, appPassword) {
   }
 
   // Schedule next read
-  setTimeout(readAndQueueEmails, 30000); // Check every 30 seconds
 }
 
 // Function to process emails from the queue
