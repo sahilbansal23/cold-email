@@ -26,7 +26,9 @@ Navigate to the project directory.
 npm install
 
 Libraray used
+
 Used IMAP for reading the all unseen mail in the authenticated mail 
+
 Used nodemailer for sending the mail reply
 
 To Run in Local machine 
