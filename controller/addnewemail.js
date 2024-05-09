@@ -16,33 +16,49 @@ async function readAndQueueEmails(email, appPassword) {
 }
 
 async function processEmail(fromEmail, emailBody) {
-  //   console.log("Received email:", emailBody);
+  //   console.log("email body main:", emailBody);
+  let replyText = null;
+  if (emailBody.toLowerCase().includes("not interested")) {
+    replyText = `
+I hope this email finds you well.
 
-  let replyText;
-  if (emailBody.toLowerCase().includes("interested")) {
-    replyText = `I hope this email finds you well.\n
-      Thank you for expressing your interest in learning more about [Product/Service]. We're thrilled to hear that you are keen to explore further.\n
-      To provide you with a comprehensive understanding of our [Product/Service], I would like to extend an invitation for a demo call. This will allow us to walk you through the features, benefits, and any specific aspects you might be interested in.\n
-      Could you please let me know a convenient time for you to hop on a demo call? I'm available [suggest a few specific times or offer to accommodate their schedule]. Kindly confirm your availability, and I'll ensure to schedule the call accordingly.\n
-      Looking forward to connecting with you and addressing any queries you may have.
-        
-      Best regards,
-      Sahil Bansal
-      +91-9479875600`;
-  } else if (emailBody.toLowerCase().includes("not interested")) {
-    replyText = `I hope this email finds you well.\n
-  
-      Thank you for taking the time to respond. I understand that you are currently not interested in learning more about [Topic]. Your feedback is valuable to us, and we respect your decision.\n
-        
-      Should your circumstances change in the future or if you find yourself reconsidering, please don't hesitate to reach out to us. We are always here to assist you and provide further information whenever you need it.\n
-        
-      Feel free to contact us at [Your Contact Information] whenever you are ready to explore [Topic] further. We would be delighted to assist you in any way we can.\n
-        
-      Once again, thank you for considering [Your Company/Product/Service]. We wish you all the best in your endeavors.`;
+Thank you for taking the time to respond. I understand that you are currently not interested in learning more about [Topic]. Your feedback is valuable to us, and we respect your decision.
+
+Should your circumstances change in the future or if you find yourself reconsidering, please don't hesitate to reach out to us. We are always here to assist you and provide further information whenever you need it.
+
+Feel free to contact us at [Your Contact Information] whenever you are ready to explore [Topic] further. We would be delighted to assist you in any way we can.
+
+Once again, thank you for considering [Your Company/Product/Service]. We wish you all the best in your endeavors.
+
+Best Regards,
+Sahil Bansal
++91-9479875600
+`;
+  } else if (emailBody.toLowerCase().includes("interested")) {
+    replyText = `I hope this email finds you well.
+    
+Thank you for expressing your interest in learning more about [Product/Service]. We're thrilled to hear that you are keen to explore further.
+    
+To provide you with a comprehensive understanding of our [Product/Service], I would like to extend an invitation for a demo call. This will allow us to walk you through the features, benefits, and any specific aspects you might be interested in.
+    
+Could you please let me know a convenient time for you to hop on a demo call? I'm available [suggest a few specific times or offer to accommodate their schedule]. Kindly confirm your availability, and I'll ensure to schedule the call accordingly.
+    
+Looking forward to connecting with you and addressing any queries you may have.
+    
+Best Regards,
+Sahil Bansal
++91-9479875600
+    `;
   } else {
-    replyText = "Thank you for your email. How can we assist you further?";
-  }
+    replyText = `
+I hope this email finds you well.
+Thank you for your email. How can we assist you further?
 
+Best Regards,
+Sahil Bansal
++91-9479875600
+`;
+  }
   try {
     await sendReply(fromEmail, replyText);
   } catch (error) {
@@ -82,7 +98,7 @@ const getEmails = async (email, appPassword) => {
       tlsOptions: { rejectUnauthorized: false },
     };
 
-    setInterval(() => checkIMAP(imapConfig), 30000);
+    setInterval(() => checkIMAP(imapConfig), 2000);
     checkIMAP(imapConfig);
   } catch (error) {
     console.log("an error occurred", error);
