@@ -20,6 +20,7 @@ Installation
 Clone this repository to your local machine.
 
 git clone https://github.com/your-username/automated-email-reply.git
+
 Navigate to the project directory.
 
 npm install
