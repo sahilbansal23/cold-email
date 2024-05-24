@@ -19,6 +19,9 @@ async function processEmail(fromEmail, emailBody) {
   //   console.log("email body main:", emailBody);
   let replyText = null;
   let label = "More Information";
+  if (emailBody == null || emailBody == undefined) {
+    return label;
+  }
   if (emailBody?.toLowerCase().includes("not interested")) {
     replyText = `
 I hope this email finds you well.
