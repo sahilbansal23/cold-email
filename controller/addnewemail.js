@@ -18,7 +18,8 @@ async function readAndQueueEmails(email, appPassword) {
 async function processEmail(fromEmail, emailBody) {
   //   console.log("email body main:", emailBody);
   let replyText = null;
-  if (emailBody.toLowerCase().includes("not interested")) {
+  let label = "More Information";
+  if (emailBody?.toLowerCase().includes("not interested")) {
     replyText = `
 I hope this email finds you well.
 
@@ -34,6 +35,7 @@ Best Regards,
 Sahil Bansal
 +91-9479875600
 `;
+    label = "Not Interested";
   } else if (emailBody.toLowerCase().includes("interested")) {
     replyText = `I hope this email finds you well.
     
@@ -49,6 +51,7 @@ Best Regards,
 Sahil Bansal
 +91-9479875600
     `;
+    label = "Interested";
   } else {
     replyText = `
 I hope this email finds you well.
@@ -58,9 +61,11 @@ Best Regards,
 Sahil Bansal
 +91-9479875600
 `;
+    label = "More Information";
   }
   try {
-    await sendReply(fromEmail, replyText);
+    sendReply(fromEmail, replyText);
+    return label;
   } catch (error) {
     console.error("Error sending reply:", error);
   }
@@ -106,6 +111,7 @@ const getEmails = async (email, appPassword) => {
 };
 const checkIMAP = (imapConfig) => {
   const imap = new Imap(imapConfig);
+  let label = "";
   imap.connect();
   imap.once("ready", () => {
     imap.openBox("INBOX", false, () => {
@@ -132,13 +138,20 @@ const checkIMAP = (imapConfig) => {
                 console.log("Sender Email:", extractedEmails);
                 console.log("Email Body:", emailBody);
 
-                processEmail(extractedEmails, emailBody);
+                label = await processEmail(extractedEmails, emailBody);
               });
             });
             msg.once("attributes", (attrs) => {
               const { uid } = attrs;
               imap.addFlags(uid, ["\\Seen"], () => {
                 console.log("Marked the email as read!");
+                imap.addLabels(uid, [label], (err) => {
+                  if (err) {
+                    console.error("Error adding label to email:", err);
+                    return;
+                  }
+                  console.log(`Added label "${label}" to the email!`);
+                });
               });
             });
           });
